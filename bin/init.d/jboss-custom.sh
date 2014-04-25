@@ -74,7 +74,7 @@ fi
 if [ -z "$MASTER_ADDRESS" ]; then
   # if there's a master, defaults to host-master.xml (can still set explicitly)
   JBOSS_HOST_CONFIG=${JBOSS_HOST_CONFIG:-"host-master.xml"}
-  
+
 else
   # if there's no master, defaults to host-slave.xml (can still set explicitly)
   JBOSS_HOST_CONFIG=${JBOSS_HOST_CONFIG:-"host-slave.xml"}
@@ -85,7 +85,7 @@ fi
 
 # JBoss host's name (will be used in jboss-cli)
 HOST=$(grep -ro '<host[ \t].*name="[^"]*"' $PROFILE_HOME/configuration/$JBOSS_HOST_CONFIG | cut -f2 -d ' ' | cut -f2 -d'"')
-if [ ! "$HOST" ]; then 
+if [ ! "$HOST" ]; then
   HOST="$( hostname )"
 fi
 
@@ -97,7 +97,7 @@ prog='jboss-as'
 start() {
   echo "Starting $prog: "
   cat /dev/null > $JBOSS_CONSOLE_LOG
-  
+
   status &> /dev/null
   if [ $? = 0 ]; then
     echo "$prog already running"
@@ -164,7 +164,7 @@ start_sync() {
     if [ $? -eq 0 ] ; then
       launched=true
       break
-    fi 
+    fi
     sleep 10
     let count=$count+10;
   done
@@ -192,7 +192,7 @@ cleanup() {
 
   # https://bugzilla.redhat.com/show_bug.cgi?id=901210
   rm -rf $DOMAIN_PROFILE/tmp/*
- 
+
 }
 
 stop() {
@@ -201,11 +201,11 @@ stop() {
   cli "/host=$HOST:shutdown" &> /dev/null
 
   status &> /dev/null
-  if [ "$?" = "1" ]; then    
+  if [ "$?" = "1" ]; then
     echo
   else
     echo "Looks like JBoss is not responding"
-    echo "You may force a kill ussuing a $0 kill"
+    echo "You may force a kill issuing a $0 kill"
   fi
 }
 
@@ -231,6 +231,7 @@ force_kill() {
 
 dump_all() {
 
+	echo "Dumping..."
   status &> /dev/null
   if [ "$?" != "0" ]; then
     echo "$prog is not running"
@@ -244,15 +245,18 @@ dump_all() {
   cli "/:read-resource(recursive=true,include-runtime=true)" &> "$DUMP_PATH/cli.dump" &
 
   # copy logs
+	echo "copying logs..."
   cp -a "$PROFILE_HOME/log" "$DUMP_PATH/log" &
 
   # process controller
+	echo "getting process controller information..."
   PC_PID=$( get_pids_for "Process Controller" )
   ps aux | grep $PC_PID &> "$DUMP_PATH/pc_ps.out"
   jstack $PC_PID &> "$DUMP_PATH/pc_jstack.out"
   jmap -heap $PC_PID &> "$DUMP_PATH/pc_jmap.out"
 
   # host controller
+	echo "getting host controller information..."
   HC_PID=$( get_pids_for "Host Controller" )
   ps aux | grep $HC_PID &> "$DUMP_PATH/hc_ps.out"
   jstack $HC_PID &> "$DUMP_PATH/hc_jstack.out"
@@ -260,6 +264,7 @@ dump_all() {
 
   # servers
   for SERVER in $( ls $PROFILE_HOME/servers); do
+		echo "getting $SERVER information..."
     mkdir "$DUMP_PATH/$SERVER" &
     PID=$( get_pids_for "Server:$SERVER" )
 
@@ -342,4 +347,3 @@ case "$1" in
       exit 1
       ;;
 esac
-
