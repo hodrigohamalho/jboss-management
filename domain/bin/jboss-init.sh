@@ -6,49 +6,41 @@
 # description: JBoss AS Domain
 # processname: domain
 #
-# Rafael Liu <rafaelliu@gmail.com>
+# Author: Rafael Liu <rafaelliu@gmail.com>
+# Modified by: Anderson Deluiz <https://github.com/anddeluiz>
 #
 
-BIND_ADDRESS="127.0.0.1"
+derelativize() {
+  if [[ $OSTYPE == *linux* ]]; then
+    readlink -f $1
+  elif [[ $OSTYPE == *darwin* ]]; then
+    if hash greadlink 2>/dev/null; then
+      greadlink -f $1
+    else
+      echo "ERROR: You need greadlink to run this, please run: brew install coreutils / macports install coreutils"
+      exit 1
+    fi
+  fi
+}
 
-# uncomment if (and only if) it's a remote HC
-#MASTER_ADDRESS="xxx.xxx.xxx.xxx"
+PROGRAM=$( derelativize $0 )
+DIR=$( dirname $PROGRAM )
 
-# need in order to use service jboss start console
-#JBOSS_CONSOLE_LOG="/tmp/jboss-console.log"
+if [ -z "$JBOSS_HOME" ]; then
+  DOMAIN_PROFILE=${DIR%%/bin}
+  DOMAIN_PROFILE=${DOMAIN_PROFILE##*/}
 
-# 
-# Great default: courtesy of the bin directory in the profile
-#
+  PROFILE_HOME=$( derelativize $DIR/../ )
+  JBOSS_HOME=$( derelativize $DIR/../../ )
 
-DIR=$( dirname $0 )
-
-
-DOMAIN_PROFILE=${PWD%%/bin}
-DOMAIN_PROFILE=${DOMAIN_PROFILE##*/}
-
-if [[ $OSTYPE == *linux* ]]; then
-	
-  PROFILE_HOME=$( readlink -f  $DIR/../ )
-  JBOSS_HOME=$( readlink -f $DIR/../../ )
-
-# To work with OS X
-elif [[ $OSTYPE == *darwin* ]]; then 
-	
-	if hash greadlink 2>/dev/null; then
-	    PROFILE_HOME=$( greadlink -f $DIR/../ )
-	    JBOSS_HOME=$( greadlink -f $DIR/../../ )
-	else
-		echo "You need greadlink to run this, please run: brew install coreutils"
-		echo "Or: macports install coreutils"
-		echo "And try again."
-		exit
-	fi
-	
+  if [ ! -f "$JBOSS_HOME/bin/product.conf" ]; then
+    echo "ERROR: couldn't auto-find JBoss Application Server at ${JBOSS_HOME}"
+    echo "ERROR: Please check JBOSS_HOME environment variable."
+    exit 1
+  fi
 fi
 
-. $JBOSS_HOME/bin/init.d/jboss-custom.sh $*
+source $DIR/setup.conf
 
-
-
+source $JBOSS_HOME/bin/init.d/jboss-custom.sh $*
 

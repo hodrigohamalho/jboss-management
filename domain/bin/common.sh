@@ -1,9 +1,4 @@
 #!/bin/sh
-#
-# Utility for adding user to this specific instance
-#
-# Rafael Liu <rafaelliu@gmail.com>
-#
 
 derelativize() {
   if [[ $OSTYPE == *linux* ]]; then
@@ -19,7 +14,6 @@ derelativize() {
 }
 
 PROGRAM=$( derelativize $0 )
-DIR=$( dirname $PROGRAM )
 
 if [ -z "$JBOSS_HOME" ]; then
   DOMAIN_PROFILE=${DIR%%/bin}
@@ -35,5 +29,3 @@ if [ -z "$JBOSS_HOME" ]; then
 fi
 
 source $DIR/setup.conf
-
-JAVA_OPTS="$JAVA_OPTS -Djboss.domain.config.user.dir=$PROFILE_HOME/configuration" $JBOSS_HOME/bin/add-user.sh $*
